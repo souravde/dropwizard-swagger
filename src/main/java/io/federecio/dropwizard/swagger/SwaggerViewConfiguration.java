@@ -26,74 +26,28 @@
  */
 package io.federecio.dropwizard.swagger;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.annotation.Nullable;
 
 /**
  * Contains all configurable parameters required to render the SwaggerUI View from the default
  * template
  */
+@Getter
+@Setter
+@NoArgsConstructor
 public class SwaggerViewConfiguration {
 
-  private static final String DEFAULT_TITLE = "Swagger UI";
-  private static final String DEFAULT_TEMPLATE = "index.ftl";
+    private static final String DEFAULT_TITLE = "Swagger UI";
+    private static final String DEFAULT_TEMPLATE = "index.ftl";
 
-  @Nullable private String pageTitle;
+    private String pageTitle = DEFAULT_TITLE;
 
-  @Nullable private String templateUrl;
+    private String templateUrl = DEFAULT_TEMPLATE;
 
-  @Nullable private String validatorUrl;
-
-  private boolean showApiSelector;
-  private boolean showAuth;
-
-  public SwaggerViewConfiguration() {
-    this.pageTitle = DEFAULT_TITLE;
-    this.templateUrl = DEFAULT_TEMPLATE;
-    this.validatorUrl = null;
-    this.showApiSelector = true;
-    this.showAuth = true;
-  }
-
-  @Nullable
-  public String getPageTitle() {
-    return pageTitle;
-  }
-
-  public void setPageTitle(@Nullable String title) {
-    this.pageTitle = title;
-  }
-
-  @Nullable
-  public String getTemplateUrl() {
-    return templateUrl;
-  }
-
-  public void setTemplateUrl(@Nullable String templateUrl) {
-    this.templateUrl = templateUrl;
-  }
-
-  @Nullable
-  public String getValidatorUrl() {
-    return validatorUrl;
-  }
-
-  public void setValidatorUrl(@Nullable String validatorUrl) {
-    this.validatorUrl = validatorUrl;
-  }
-
-  public boolean isShowApiSelector() {
-    return showApiSelector;
-  }
-
-  public void setShowApiSelector(boolean showApiSelector) {
-    this.showApiSelector = showApiSelector;
-  }
-
-  public boolean isShowAuth() {
-    return showAuth;
-  }
-
-  public void setShowAuth(boolean showAuth) {
-    this.showAuth = showAuth;
-  }
+    @Nullable
+    private String validatorUrl;
 }

@@ -28,9 +28,11 @@
 package io.federecio.dropwizard.swagger;
 
 import io.dropwizard.views.View;
-import java.nio.charset.StandardCharsets;
+import lombok.Getter;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Serves the content of Swagger's index page which has been "templatized" to support replacing the
@@ -39,96 +41,53 @@ import javax.annotation.Nullable;
  */
 public class SwaggerView extends View {
 
-  private static final String SWAGGER_URI_PATH = "/swagger-static";
+    private static final String SWAGGER_URI_PATH = "/swagger-static";
 
-  private final String swaggerAssetsPath;
-  private final String contextPath;
+    @Getter
+    private final String swaggerAssetsPath;
 
-  private final SwaggerViewConfiguration viewConfiguration;
-  private final SwaggerOAuth2Configuration oauth2Configuration;
+    @Getter
+    private final String contextPath;
 
-  public SwaggerView(
-      @Nonnull final String contextRoot,
-      @Nonnull final String urlPattern,
-      @Nonnull SwaggerViewConfiguration viewConfiguration,
-      @Nonnull SwaggerOAuth2Configuration oauth2Configuration) {
-    super(viewConfiguration.getTemplateUrl(), StandardCharsets.UTF_8);
+    private final SwaggerViewConfiguration viewConfiguration;
 
-    String contextRootPrefix = "/".equals(contextRoot) ? "" : contextRoot;
+    public SwaggerView(@Nonnull final String contextRoot,
+                       @Nonnull final String urlPattern,
+                       @Nonnull SwaggerViewConfiguration viewConfiguration) {
+        super(viewConfiguration.getTemplateUrl(), StandardCharsets.UTF_8);
 
-    // swagger-static should be found on the root context
-    if (!contextRootPrefix.isEmpty()) {
-      swaggerAssetsPath = contextRootPrefix + SWAGGER_URI_PATH;
-    } else {
-      swaggerAssetsPath =
-          (urlPattern.equals("/") ? SWAGGER_URI_PATH : (urlPattern + SWAGGER_URI_PATH));
+        String contextRootPrefix = "/".equals(contextRoot) ? "" : contextRoot;
+
+        // swagger-static should be found on the root context
+        if (!contextRootPrefix.isEmpty()) {
+            swaggerAssetsPath = contextRootPrefix + SWAGGER_URI_PATH;
+        } else {
+            swaggerAssetsPath =
+                    (urlPattern.equals("/") ? SWAGGER_URI_PATH : (urlPattern + SWAGGER_URI_PATH));
+        }
+
+        contextPath = urlPattern.equals("/") ? contextRootPrefix : (contextRootPrefix + urlPattern);
+
+        this.viewConfiguration = viewConfiguration;
     }
 
-    contextPath = urlPattern.equals("/") ? contextRootPrefix : (contextRootPrefix + urlPattern);
+    /**
+     * Returns the title for the browser header
+     *
+     * @return String
+     */
+    @Nullable
+    public String getTitle() {
+        return viewConfiguration.getPageTitle();
+    }
 
-    this.viewConfiguration = viewConfiguration;
-    this.oauth2Configuration = oauth2Configuration;
-  }
-
-  /**
-   * Returns the title for the browser header
-   *
-   * @return String
-   */
-  @Nullable
-  public String getTitle() {
-    return viewConfiguration.getPageTitle();
-  }
-
-  /**
-   * Returns the path with which all requests for Swagger's static content need to be prefixed
-   *
-   * @return String
-   */
-  public String getSwaggerAssetsPath() {
-    return swaggerAssetsPath;
-  }
-
-  /**
-   * Returns the path with with which all requests made by Swagger's UI to Resources need to be
-   * prefixed
-   *
-   * @return String
-   */
-  public String getContextPath() {
-    return contextPath;
-  }
-
-  /**
-   * Returns the location of the validator URL or null to disable
-   *
-   * @return String
-   */
-  @Nullable
-  public String getValidatorUrl() {
-    return viewConfiguration.getValidatorUrl();
-  }
-
-  /**
-   * Returns whether to display the authorization input boxes
-   *
-   * @return String
-   */
-  public boolean getShowAuth() {
-    return viewConfiguration.isShowAuth();
-  }
-
-  /**
-   * Returns whether to display the swagger spec selector
-   *
-   * @return boolean
-   */
-  public boolean getShowApiSelector() {
-    return viewConfiguration.isShowApiSelector();
-  }
-
-  /** @return {@link SwaggerOAuth2Configuration} containing every properties to init oauth2 */
-  public SwaggerOAuth2Configuration getOauth2Configuration() {
-    return oauth2Configuration;
-  }
+    /**
+     * Returns the location of the validator URL or null to disable
+     *
+     * @return String
+     */
+    @Nullable
+    public String getValidatorUrl() {
+        return viewConfiguration.getValidatorUrl();
+    }
 }

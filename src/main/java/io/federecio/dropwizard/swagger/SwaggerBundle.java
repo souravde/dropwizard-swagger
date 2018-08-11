@@ -33,11 +33,7 @@ import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.views.ViewBundle;
-import io.swagger.config.FilterFactory;
-import io.swagger.converter.ModelConverters;
-import io.swagger.jackson.ModelResolver;
-import io.swagger.jaxrs.listing.ApiListingResource;
-import io.swagger.jaxrs.listing.SwaggerSerializers;
+import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 
 /**
  * A {@link io.dropwizard.ConfiguredBundle} that provides hassle-free configuration of Swagger and
@@ -45,55 +41,38 @@ import io.swagger.jaxrs.listing.SwaggerSerializers;
  */
 public abstract class SwaggerBundle<T extends Configuration> implements ConfiguredBundle<T> {
 
-  @Override
-  public void initialize(Bootstrap<?> bootstrap) {
-    bootstrap.addBundle(new ViewBundle<Configuration>());
-    ModelConverters.getInstance().addConverter(new ModelResolver(bootstrap.getObjectMapper()));
-  }
-
-  @Override
-  public void run(T configuration, Environment environment) throws Exception {
-    final SwaggerBundleConfiguration swaggerBundleConfiguration =
-        getSwaggerBundleConfiguration(configuration);
-    if (swaggerBundleConfiguration == null) {
-      throw new IllegalStateException(
-          "You need to provide an instance of SwaggerBundleConfiguration");
+    @Override
+    public void initialize(Bootstrap<?> bootstrap) {
+        bootstrap.addBundle(new ViewBundle<Configuration>());
     }
 
-    if (!swaggerBundleConfiguration.isEnabled()) {
-      return;
+    @Override
+    public void run(T configuration, Environment environment) {
+        final SwaggerBundleConfiguration swaggerBundleConfiguration = getSwaggerBundleConfiguration(configuration);
+        if (swaggerBundleConfiguration == null) {
+            throw new IllegalStateException("You need to provide an instance of SwaggerBundleConfiguration");
+        }
+
+        if (!swaggerBundleConfiguration.isEnabled()) {
+            return;
+        }
+
+        final ConfigurationHelper configurationHelper =
+                new ConfigurationHelper(configuration, swaggerBundleConfiguration);
+        new AssetsBundle(
+                "/swagger-static", configurationHelper.getSwaggerUriPath(), null, "swagger-assets")
+                .run(environment);
+
+        environment.jersey().register(
+                new OpenApiResource().openApiConfiguration(swaggerBundleConfiguration.getSwaggerConfiguration())
+        );
+
+        environment.jersey().register(
+                new SwaggerResource(configurationHelper.getUrlPattern(),
+                        swaggerBundleConfiguration.getSwaggerViewConfiguration(),
+                        swaggerBundleConfiguration.getContextRoot())
+        );
     }
 
-    final ConfigurationHelper configurationHelper =
-        new ConfigurationHelper(configuration, swaggerBundleConfiguration);
-    new AssetsBundle(
-            "/swagger-static", configurationHelper.getSwaggerUriPath(), null, "swagger-assets")
-        .run(environment);
-
-    new AssetsBundle(
-            "/swagger-static/oauth2-redirect.html",
-            configurationHelper.getOAuth2RedirectUriPath(),
-            null,
-            "swagger-oauth2-connect")
-        .run(environment);
-
-    swaggerBundleConfiguration.build(configurationHelper.getUrlPattern());
-
-    FilterFactory.setFilter(new AuthParamFilter());
-
-    environment.jersey().register(new ApiListingResource());
-    environment.jersey().register(new SwaggerSerializers());
-    if (swaggerBundleConfiguration.isIncludeSwaggerResource()) {
-      environment
-          .jersey()
-          .register(
-              new SwaggerResource(
-                  configurationHelper.getUrlPattern(),
-                  swaggerBundleConfiguration.getSwaggerViewConfiguration(),
-                  swaggerBundleConfiguration.getSwaggerOAuth2Configuration(),
-                  swaggerBundleConfiguration.getContextRoot()));
-    }
-  }
-
-  protected abstract SwaggerBundleConfiguration getSwaggerBundleConfiguration(T configuration);
+    protected abstract SwaggerBundleConfiguration getSwaggerBundleConfiguration(T configuration);
 }

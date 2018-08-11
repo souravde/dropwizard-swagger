@@ -16,93 +16,144 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>com.smoketurner.dropwizard</groupId>
-        <artifactId>dropwizard-pom</artifactId>
-        <version>0.0.2</version>
-    </parent>
 
-    <groupId>com.smoketurner</groupId>
+    <groupId>io.dropwizard.swagger</groupId>
     <artifactId>dropwizard-swagger</artifactId>
-    <version>1.3.5-2-SNAPSHOT</version>
+    <version>1.3.5-1-SNAPSHOT</version>
+    <packaging>jar</packaging>
 
     <name>Dropwizard Swagger support</name>
     <description>A simple way to document your REST APIs in DropWizard using Swagger</description>
-    <url>https://github.com/smoketurner/dropwizard-swagger/</url>
+    <url>https://github.com/souravde/dropwizard-swagger/</url>
 
-    <developers>
-        <developer>
-            <name>Federico Recio</name>
-            <url>http://about.me/federecio</url>
-        </developer>
-        <developer>
-            <id>jplock</id>
-            <name>Justin Plock</name>
-            <email>jplock@smoketurner.com</email>
-            <timezone>America/New_York</timezone>
-        </developer>
-    </developers>
-
-    <inceptionYear>2014</inceptionYear>
-    <scm>
-        <connection>scm:git:git://github.com:smoketurner/dropwizard-swagger.git</connection>
-        <developerConnection>scm:git:git@github.com:smoketurner/dropwizard-swagger.git</developerConnection>
-        <url>http://github.com/smoketurner/dropwizard-swagger</url>
-        <tag>HEAD</tag>
-    </scm>
+    <properties>
+        <swagger.version>2.0.2</swagger.version>
+        <lombok.version>1.18.0</lombok.version>
+        <dropwizard.version>1.3.5</dropwizard.version>
+        <maven.download.plugin.version>1.4.1</maven.download.plugin.version>
+        <maven.resource.plugin.version>3.1.0</maven.resource.plugin.version>
+        <maven.compiler.plugin.version>3.8.0</maven.compiler.plugin.version>
+    </properties>
 
     <dependencies>
+
+        <!-- Dropwizard -->
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-auth</artifactId>
+            <version>${dropwizard.version}</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-assets</artifactId>
+            <version>${dropwizard.version}</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-views</artifactId>
+            <version>${dropwizard.version}</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-views-freemarker</artifactId>
+            <version>${dropwizard.version}</version>
         </dependency>
+
+        <!-- Swagger -->
         <dependency>
-            <groupId>org.glassfish.jersey.media</groupId>
-            <artifactId>jersey-media-multipart</artifactId>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-jaxrs2</artifactId>
+            <version>${swagger.version}</version>
         </dependency>
+
+        <!-- Lombok -->
         <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-jersey2-jaxrs</artifactId>
-            <version>1.5.20</version>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>io.rest-assured</groupId>
-            <artifactId>rest-assured</artifactId>
-            <version>3.0.1</version>
-            <scope>test</scope>
-        </dependency>
+
     </dependencies>
+
+    <!-- Plugin Repositories -->
+    <pluginRepositories>
+        <pluginRepository>
+            <id>sonatype-public-repository</id>
+            <url>https://oss.sonatype.org/content/groups/public</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </pluginRepository>
+    </pluginRepositories>
 
     <build>
         <plugins>
+
+            <!-- Download Maven Plugin -->
             <plugin>
-                <groupId>com.mycila</groupId>
-                <artifactId>license-maven-plugin</artifactId>
+                <groupId>com.googlecode.maven-download-plugin</groupId>
+                <artifactId>download-maven-plugin</artifactId>
+                <version>${maven.download.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>swagger-ui</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>wget</goal>
+                        </goals>
+                        <configuration>
+                            <url>https://github.com/swagger-api/swagger-ui/archive/master.tar.gz</url>
+                            <unpack>true</unpack>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Maven Resource Plugin -->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>${maven.resource.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>target/classes/swagger-static</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.build.directory}/swagger-ui-master/dist</directory>
+                                    <filtering>true</filtering>
+                                    <excludes>
+                                        <exclude>index.html</exclude>
+                                    </excludes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Maven Compiler Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
                 <configuration>
-                    <properties>
-                        <owner>Federico Recio</owner>
-                        <email>N/A</email>
-                    </properties>
-                 </configuration>
-             </plugin>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

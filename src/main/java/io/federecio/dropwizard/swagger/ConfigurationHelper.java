@@ -31,6 +31,7 @@ import io.dropwizard.Configuration;
 import io.dropwizard.server.DefaultServerFactory;
 import io.dropwizard.server.ServerFactory;
 import io.dropwizard.server.SimpleServerFactory;
+
 import java.util.Optional;
 
 /**
@@ -39,98 +40,98 @@ import java.util.Optional;
  */
 public class ConfigurationHelper {
 
-  private final Configuration configuration;
-  private final SwaggerBundleConfiguration swaggerBundleConfiguration;
+    private final Configuration configuration;
+    private final SwaggerBundleConfiguration swaggerBundleConfiguration;
 
-  /**
-   * Constructor
-   *
-   * @param configuration Configuration
-   * @param swaggerBundleConfiguration Bundle Configuration
-   */
-  public ConfigurationHelper(
-      Configuration configuration, SwaggerBundleConfiguration swaggerBundleConfiguration) {
-    this.configuration = configuration;
-    this.swaggerBundleConfiguration = swaggerBundleConfiguration;
-  }
-
-  public String getJerseyRootPath() {
-    // if the user explicitly defined a path to prefix requests use it
-    // instead of derive it
-    if (swaggerBundleConfiguration.getUriPrefix() != null) {
-      return swaggerBundleConfiguration.getUriPrefix();
+    /**
+     * Constructor
+     *
+     * @param configuration              Configuration
+     * @param swaggerBundleConfiguration Bundle Configuration
+     */
+    public ConfigurationHelper(
+            Configuration configuration, SwaggerBundleConfiguration swaggerBundleConfiguration) {
+        this.configuration = configuration;
+        this.swaggerBundleConfiguration = swaggerBundleConfiguration;
     }
 
-    final ServerFactory serverFactory = configuration.getServerFactory();
+    public String getJerseyRootPath() {
+        // if the user explicitly defined a path to prefix requests use it
+        // instead of derive it
+        if (swaggerBundleConfiguration.getUriPrefix() != null) {
+            return swaggerBundleConfiguration.getUriPrefix();
+        }
 
-    final Optional<String> rootPath;
-    if (serverFactory instanceof SimpleServerFactory) {
-      rootPath = ((SimpleServerFactory) serverFactory).getJerseyRootPath();
-    } else {
-      rootPath = ((DefaultServerFactory) serverFactory).getJerseyRootPath();
+        final ServerFactory serverFactory = configuration.getServerFactory();
+
+        final Optional<String> rootPath;
+        if (serverFactory instanceof SimpleServerFactory) {
+            rootPath = ((SimpleServerFactory) serverFactory).getJerseyRootPath();
+        } else {
+            rootPath = ((DefaultServerFactory) serverFactory).getJerseyRootPath();
+        }
+
+        return stripUrlSlashes(rootPath.orElse("/"));
     }
 
-    return stripUrlSlashes(rootPath.orElse("/"));
-  }
+    public String getUrlPattern() {
+        // if the user explicitly defined a path to prefix requests use it
+        // instead of derive it
+        if (swaggerBundleConfiguration.getUriPrefix() != null) {
+            return swaggerBundleConfiguration.getUriPrefix();
+        }
 
-  public String getUrlPattern() {
-    // if the user explicitly defined a path to prefix requests use it
-    // instead of derive it
-    if (swaggerBundleConfiguration.getUriPrefix() != null) {
-      return swaggerBundleConfiguration.getUriPrefix();
+        final String applicationContextPath = getApplicationContextPath();
+        final String rootPath = getJerseyRootPath();
+
+        final String urlPattern;
+        if ("/".equals(rootPath) && "/".equals(applicationContextPath)) {
+            urlPattern = "/";
+        } else if ("/".equals(rootPath) && !"/".equals(applicationContextPath)) {
+            urlPattern = applicationContextPath;
+        } else if (!"/".equals(rootPath) && "/".equals(applicationContextPath)) {
+            urlPattern = rootPath;
+        } else {
+            urlPattern = applicationContextPath + rootPath;
+        }
+
+        return urlPattern;
     }
 
-    final String applicationContextPath = getApplicationContextPath();
-    final String rootPath = getJerseyRootPath();
-
-    final String urlPattern;
-    if ("/".equals(rootPath) && "/".equals(applicationContextPath)) {
-      urlPattern = "/";
-    } else if ("/".equals(rootPath) && !"/".equals(applicationContextPath)) {
-      urlPattern = applicationContextPath;
-    } else if (!"/".equals(rootPath) && "/".equals(applicationContextPath)) {
-      urlPattern = rootPath;
-    } else {
-      urlPattern = applicationContextPath + rootPath;
+    public String getSwaggerUriPath() {
+        final String jerseyRootPath = getJerseyRootPath();
+        final String uriPathPrefix = jerseyRootPath.equals("/") ? "" : jerseyRootPath;
+        return uriPathPrefix + "/swagger-static";
     }
 
-    return urlPattern;
-  }
-
-  public String getSwaggerUriPath() {
-    final String jerseyRootPath = getJerseyRootPath();
-    final String uriPathPrefix = jerseyRootPath.equals("/") ? "" : jerseyRootPath;
-    return uriPathPrefix + "/swagger-static";
-  }
-
-  public String getOAuth2RedirectUriPath() {
-    final String jerseyRootPath = getJerseyRootPath();
-    final String uriPathPrefix = jerseyRootPath.equals("/") ? "" : jerseyRootPath;
-    return uriPathPrefix + "/oauth2-redirect.html";
-  }
-
-  private String getApplicationContextPath() {
-    final ServerFactory serverFactory = configuration.getServerFactory();
-
-    final String applicationContextPath;
-    if (serverFactory instanceof SimpleServerFactory) {
-      applicationContextPath = ((SimpleServerFactory) serverFactory).getApplicationContextPath();
-    } else {
-      applicationContextPath = ((DefaultServerFactory) serverFactory).getApplicationContextPath();
+    public String getOAuth2RedirectUriPath() {
+        final String jerseyRootPath = getJerseyRootPath();
+        final String uriPathPrefix = jerseyRootPath.equals("/") ? "" : jerseyRootPath;
+        return uriPathPrefix + "/oauth2-redirect.html";
     }
 
-    return stripUrlSlashes(applicationContextPath);
-  }
+    private String getApplicationContextPath() {
+        final ServerFactory serverFactory = configuration.getServerFactory();
 
-  private String stripUrlSlashes(String urlToStrip) {
-    if (urlToStrip.endsWith("/*")) {
-      urlToStrip = urlToStrip.substring(0, urlToStrip.length() - 1);
+        final String applicationContextPath;
+        if (serverFactory instanceof SimpleServerFactory) {
+            applicationContextPath = ((SimpleServerFactory) serverFactory).getApplicationContextPath();
+        } else {
+            applicationContextPath = ((DefaultServerFactory) serverFactory).getApplicationContextPath();
+        }
+
+        return stripUrlSlashes(applicationContextPath);
     }
 
-    if (!urlToStrip.isEmpty() && urlToStrip.endsWith("/")) {
-      urlToStrip = urlToStrip.substring(0, urlToStrip.length() - 1);
-    }
+    private String stripUrlSlashes(String urlToStrip) {
+        if (urlToStrip.endsWith("/*")) {
+            urlToStrip = urlToStrip.substring(0, urlToStrip.length() - 1);
+        }
 
-    return urlToStrip;
-  }
+        if (!urlToStrip.isEmpty() && urlToStrip.endsWith("/")) {
+            urlToStrip = urlToStrip.substring(0, urlToStrip.length() - 1);
+        }
+
+        return urlToStrip;
+    }
 }
